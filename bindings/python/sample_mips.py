@@ -57,7 +57,7 @@ def test_mips_eb():
         print(">>> R1 = 0x%x" %r1)
 
     except UcError as e:
-        print("ERROR: %s" % e)
+        print(f"ERROR: {e}")
 
 
 # Test MIPS EL
@@ -92,7 +92,7 @@ def test_mips_el():
         print(">>> R1 = 0x%x" %r1)
 
     except UcError as e:
-        print("ERROR: %s" % e)
+        print(f"ERROR: {e}")
 
 
 if __name__ == '__main__':

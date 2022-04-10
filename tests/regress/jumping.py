@@ -107,23 +107,23 @@ class Init(regress.RegressTest):
 
     # callback for tracing invalid memory access (READ or WRITE)
     def hook_mem_invalid(self, uc, access, address, size, value, user_data):
-        print("[ HOOK_MEM_INVALID - Address: %s ]" % hex(address))
+        print(f"[ HOOK_MEM_INVALID - Address: {hex(address)} ]")
         if access == UC_MEM_WRITE_UNMAPPED:
             print(">>> Missing memory is being WRITE at 0x%x, data size = %u, data value = 0x%x" %(address, size, value))
-            return True
         else:
             print(">>> Missing memory is being READ at 0x%x, data size = %u, data value = 0x%x" %(address, size, value))
-            return True
+
+        return True
 
 
     def hook_mem_fetch_unmapped(self, uc, access, address, size, value, user_data):
-        print("[ HOOK_MEM_FETCH - Address: %s ]" % hex(address))
-        print("[ mem_fetch_unmapped: faulting address at %s ]" % hex(address).strip("L"))
+        print(f"[ HOOK_MEM_FETCH - Address: {hex(address)} ]")
+        print(f'[ mem_fetch_unmapped: faulting address at {hex(address).strip("L")} ]')
         return True
 
     def runTest(self):
         global mu
- 
+
         JUMP = "\x48\x31\xc0\x48\xb8\x04\x00\x00\x00\x00\x00\x00\x00\x48\x3d\x05\x00\x00\x00\x74\x05\xe9\x0f\x00\x00\x00\x48\xba\xbe\xba\x00\x00\x00\x00\x00\x00\xe9\x0f\x00\x00\x00\x48\xba\xca\xc0\x00\x00\x00\x00\x00\x00\xe9\x00\x00\x00\x00\x90"
 
         ADDRESS = 0x1000000
@@ -157,7 +157,7 @@ class Init(regress.RegressTest):
             # emulate machine code in infinite time
             mu.emu_start(ADDRESS, ADDRESS + len(JUMP))
         except UcError as e:
-            print("ERROR: %s" % e)
+            print(f"ERROR: {e}")
 
         rdx = mu.reg_read(UC_X86_REG_RDX)
         self.assertEqual(rdx, 0xbabe, "RDX contains the wrong value. Eflags modification failed.")

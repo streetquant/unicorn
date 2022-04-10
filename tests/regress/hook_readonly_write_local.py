@@ -11,7 +11,7 @@ ACCESS_ADDR = 0x1000
 CODE = b'\xA1\x00\x10\x00\x00\xA1\x00\x10\x00\x00'
 
 def hook_mem_read(uc, access, address, size, value, data):
-    print("Reading at " + str(address))
+    print(f"Reading at {str(address)}")
     uc.mem_write(address, CODE);
 
 class REP(regress.RegressTest):

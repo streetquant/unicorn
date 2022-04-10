@@ -81,7 +81,7 @@ def test_m68k():
         print(">>> SR = 0x%x" % sr)
 
     except UcError as e:
-        print("ERROR: %s" % e)
+        print(f"ERROR: {e}")
 
 
 if __name__ == '__main__':

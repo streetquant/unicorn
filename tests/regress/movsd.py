@@ -10,10 +10,9 @@ code = 'f20f1005aa120000'.decode('hex')
 
 def dis(mem, addr):
     md = Cs(CS_ARCH_X86, CS_MODE_64)
-    return '\n'.join([
-        '%s %s' % (i.mnemonic, i.op_str)
-        for i in md.disasm(str(mem), addr)
-    ])
+    return '\n'.join(
+        [f'{i.mnemonic} {i.op_str}' for i in md.disasm(str(mem), addr)]
+    )
 
 def hook_code(uc, addr, size, user_data):
     mem = uc.mem_read(addr, size)

@@ -125,9 +125,9 @@ def UseUcToEmulate():
         uc_emu.mem_write(0, TestCode)
         uc_emu.emu_start(0, 24)
         PrintArmRegisters(uc_emu)
-        
+
     except UcError as e:
-        print("ERROR: %s" % e)
+        print(f"ERROR: {e}")
         PrintArmRegisters(uc_emu)
         
 

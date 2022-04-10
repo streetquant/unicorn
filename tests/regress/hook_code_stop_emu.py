@@ -67,7 +67,7 @@ class HookCodeStopEmuTest(regress.RegressTest):
             # 0x1010:  488907          mov [rdi], rdx
             # 0x1013:  488b07          mov rdx, [rdi]
             # 0x1016:  4883c201        add rdx, 1
-            
+
             stepper = SingleStepper(mu, self)
             showpc(mu)
             self.assertEqual(0x1000, mu.reg_read(UC_X86_REG_RIP), "Unexpected PC")
@@ -84,7 +84,7 @@ class HookCodeStopEmuTest(regress.RegressTest):
                              "Emulator failed to stop after one instruction")
 
         except UcError as e:
-            self.assertFalse(0, "ERROR: %s" % e)
+            self.assertFalse(0, f"ERROR: {e}")
 
 
 if __name__ == '__main__':

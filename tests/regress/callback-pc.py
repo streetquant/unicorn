@@ -56,7 +56,7 @@ class CallBackPCTest(regress.RegressTest):
             self.assertEqual(pc, 0xffffffff, "PC not set to 0xffffffff by instruction trace callback")
 
         except UcError as e:
-            self.assertFalse(0, "ERROR: %s" % e)
+            self.assertFalse(0, f"ERROR: {e}")
 
     def test_block_trace(self):
         try:
@@ -84,7 +84,7 @@ class CallBackPCTest(regress.RegressTest):
             self.assertEqual(pc, 0xffffffff, "PC not set to 0xffffffff by block callback")
 
         except UcError as e:
-            self.assertFalse(0, "ERROR: %s" % e)
+            self.assertFalse(0, f"ERROR: {e}")
 
 if __name__ == '__main__':
     regress.main()

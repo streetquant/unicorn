@@ -108,22 +108,21 @@ class QAPISchema:
                     raise QAPIExprError(expr_info, "Invalid 'include' directive")
                 include = expr["include"]
                 if not isinstance(include, str):
-                    raise QAPIExprError(expr_info,
-                                        'Expected a file name (string), got: %s'
-                                        % include)
+                    raise QAPIExprError(
+                        expr_info, f'Expected a file name (string), got: {include}'
+                    )
+
                 include_path = os.path.join(self.input_dir, include)
                 for elem in self.include_hist:
                     if include_path == elem[1]:
-                        raise QAPIExprError(expr_info, "Inclusion loop for %s"
-                                            % include)
+                        raise QAPIExprError(expr_info, f"Inclusion loop for {include}")
                 # skip multiple include of the same file
                 if include_path in previously_included:
                     continue
                 try:
                     fobj = open(include_path, 'r')
                 except IOError as e:
-                    raise QAPIExprError(expr_info,
-                                        '%s: %s' % (e.strerror, include))
+                    raise QAPIExprError(expr_info, f'{e.strerror}: {include}')
                 exprs_include = QAPISchema(fobj, include, self.include_hist,
                                            previously_included, expr_info)
                 self.exprs.extend(exprs_include.exprs)
@@ -201,7 +200,7 @@ class QAPISchema:
         if self.tok == ']':
             self.accept()
             return expr
-        if not self.tok in [ '{', '[', "'" ]:
+        if self.tok not in ['{', '[', "'"]:
             raise QAPISchemaError(self, 'Expected "{", "[", "]" or string')
         while True:
             expr.append(self.get_expr(True))
@@ -254,8 +253,7 @@ def discriminator_find_enum_define(expr):
     return find_enum(discriminator_type)
 
 def check_event(expr, expr_info):
-    params = expr.get('data')
-    if params:
+    if params := expr.get('data'):
         for argname, argentry, optional, structured in parse_args(params):
             if structured:
                 raise QAPIExprError(expr_info,
@@ -279,15 +277,9 @@ def check_union(expr, expr_info):
 
     # If the union object has no member 'discriminator', it's an
     # ordinary union.
-    if not discriminator:
+    if not discriminator or discriminator == {}:
         enum_define = None
 
-    # Else if the value of member 'discriminator' is {}, it's an
-    # anonymous union.
-    elif discriminator == {}:
-        enum_define = None
-
-    # Else, it's a flat union.
     else:
         # The object must have a member 'base'.
         if not base:
@@ -313,7 +305,7 @@ def check_union(expr, expr_info):
     for (key, value) in members.items():
         # If this named member's value names an enum type, then all members
         # of 'data' must also be members of the enum type.
-        if enum_define and not key in enum_define['enum_values']:
+        if enum_define and key not in enum_define['enum_values']:
             raise QAPIExprError(expr_info,
                                 "Discriminator value '%s' is not found in "
                                 "enum '%s'" %
@@ -351,9 +343,8 @@ def parse_schema(input_file):
     # Try again for hidden UnionKind enum
     for expr_elem in schema.exprs:
         expr = expr_elem['expr']
-        if 'union' in expr:
-            if not discriminator_find_enum_define(expr):
-                add_enum('%sKind' % expr['union'])
+        if 'union' in expr and not discriminator_find_enum_define(expr):
+            add_enum(f"{expr['union']}Kind")
 
     try:
         check_exprs(schema)
@@ -386,10 +377,7 @@ def de_camel_case(name):
     for ch in name:
         if ch.isupper() and new_name:
             new_name += '_'
-        if ch == '-':
-            new_name += '_'
-        else:
-            new_name += ch.lower()
+        new_name += '_' if ch == '-' else ch.lower()
     return new_name
 
 def camel_case(name):
@@ -407,45 +395,114 @@ def camel_case(name):
 
 def c_var(name, protect=True):
     # ANSI X3J11/88-090, 3.1.1
-    c89_words = set(['auto', 'break', 'case', 'char', 'const', 'continue',
-                     'default', 'do', 'double', 'else', 'enum', 'extern', 'float',
-                     'for', 'goto', 'if', 'int', 'long', 'register', 'return',
-                     'short', 'signed', 'sizeof', 'static', 'struct', 'switch',
-                     'typedef', 'union', 'unsigned', 'void', 'volatile', 'while'])
+    c89_words = {
+        'auto',
+        'break',
+        'case',
+        'char',
+        'const',
+        'continue',
+        'default',
+        'do',
+        'double',
+        'else',
+        'enum',
+        'extern',
+        'float',
+        'for',
+        'goto',
+        'if',
+        'int',
+        'long',
+        'register',
+        'return',
+        'short',
+        'signed',
+        'sizeof',
+        'static',
+        'struct',
+        'switch',
+        'typedef',
+        'union',
+        'unsigned',
+        'void',
+        'volatile',
+        'while',
+    }
+
     # ISO/IEC 9899:1999, 6.4.1
-    c99_words = set(['inline', 'restrict', '_Bool', '_Complex', '_Imaginary'])
+    c99_words = {'inline', 'restrict', '_Bool', '_Complex', '_Imaginary'}
     # ISO/IEC 9899:2011, 6.4.1
-    c11_words = set(['_Alignas', '_Alignof', '_Atomic', '_Generic', '_Noreturn',
-                     '_Static_assert', '_Thread_local'])
+    c11_words = {
+        '_Alignas',
+        '_Alignof',
+        '_Atomic',
+        '_Generic',
+        '_Noreturn',
+        '_Static_assert',
+        '_Thread_local',
+    }
+
     # GCC http://gcc.gnu.org/onlinedocs/gcc-4.7.1/gcc/C-Extensions.html
     # excluding _.*
-    gcc_words = set(['asm', 'typeof'])
+    gcc_words = {'asm', 'typeof'}
     # C++ ISO/IEC 14882:2003 2.11
-    cpp_words = set(['bool', 'catch', 'class', 'const_cast', 'delete',
-                     'dynamic_cast', 'explicit', 'false', 'friend', 'mutable',
-                     'namespace', 'new', 'operator', 'private', 'protected',
-                     'public', 'reinterpret_cast', 'static_cast', 'template',
-                     'this', 'throw', 'true', 'try', 'typeid', 'typename',
-                     'using', 'virtual', 'wchar_t',
-                     # alternative representations
-                     'and', 'and_eq', 'bitand', 'bitor', 'compl', 'not',
-                     'not_eq', 'or', 'or_eq', 'xor', 'xor_eq'])
+    cpp_words = {
+        'bool',
+        'catch',
+        'class',
+        'const_cast',
+        'delete',
+        'dynamic_cast',
+        'explicit',
+        'false',
+        'friend',
+        'mutable',
+        'namespace',
+        'new',
+        'operator',
+        'private',
+        'protected',
+        'public',
+        'reinterpret_cast',
+        'static_cast',
+        'template',
+        'this',
+        'throw',
+        'true',
+        'try',
+        'typeid',
+        'typename',
+        'using',
+        'virtual',
+        'wchar_t',
+        'and',
+        'and_eq',
+        'bitand',
+        'bitor',
+        'compl',
+        'not',
+        'not_eq',
+        'or',
+        'or_eq',
+        'xor',
+        'xor_eq',
+    }
+
     # namespace pollution:
-    polluted_words = set(['unix', 'errno'])
+    polluted_words = {'unix', 'errno'}
     if protect and (name in c89_words | c99_words | c11_words | gcc_words | cpp_words | polluted_words):
-        return "q_" + name
+        return f"q_{name}"
     return name.replace('-', '_').lstrip("*")
 
 def c_fun(name, protect=True):
     return c_var(name, protect).replace('.', '_')
 
 def c_list_type(name):
-    return '%sList' % name
+    return f'{name}List'
 
 def type_name(name):
-    if type(name) == list:
-        return c_list_type(name[0])
-    return name
+    return c_list_type(name[0]) if type(name) == list else name
 
 enum_types = []
 struct_types = []
@@ -457,10 +514,9 @@ def add_struct(definition):
 
 def find_struct(name):
     global struct_types
-    for struct in struct_types:
-        if struct['type'] == name:
-            return struct
-    return None
+    return next(
+        (struct for struct in struct_types if struct['type'] == name), None
+    )
 
 def add_union(definition):
     global union_types
@@ -468,10 +524,7 @@ def add_union(definition):
 
 def find_union(name):
     global union_types
-    for union in union_types:
-        if union['union'] == name:
-            return union
-    return None
+    return next((union for union in union_types if union['union'] == name), None)
 
 def add_enum(name, enum_values = None):
     global enum_types
@@ -479,10 +532,7 @@ def add_enum(name, enum_values = None):
 
 def find_enum(name):
     global enum_types
-    for enum in enum_types:
-        if enum['enum_name'] == name:
-            return enum
-    return None
+    return next((enum for enum in enum_types if enum['enum_name'] == name), None)
 
 def is_enum(name):
     return find_enum(name) != None
@@ -494,16 +544,20 @@ eatspace = '\033EATSPACE.'
 # value of c_type() outside mcgen().
 def c_type(name, is_param=False):
     if name == 'str':
-        if is_param:
-            return 'const char *' + eatspace
-        return 'char *' + eatspace
-
+        return f'const char *{eatspace}' if is_param else f'char *{eatspace}'
     elif name == 'int':
         return 'int64_t'
-    elif (name == 'int8' or name == 'int16' or name == 'int32' or
-          name == 'int64' or name == 'uint8' or name == 'uint16' or
-          name == 'uint32' or name == 'uint64'):
-        return name + '_t'
+    elif name in [
+        'int8',
+        'int16',
+        'int32',
+        'int64',
+        'uint8',
+        'uint16',
+        'uint32',
+        'uint64',
+    ]:
+        return f'{name}_t'
     elif name == 'size':
         return 'uint64_t'
     elif name == 'bool':
@@ -511,25 +565,22 @@ def c_type(name, is_param=False):
     elif name == 'number':
         return 'double'
     elif type(name) == list:
-        return '%s *%s' % (c_list_type(name[0]), eatspace)
+        return f'{c_list_type(name[0])} *{eatspace}'
     elif is_enum(name):
         return name
-    elif name == None or len(name) == 0:
+    elif name is None or len(name) == 0:
         return 'void'
     elif name == name.upper():
-        return '%sEvent *%s' % (camel_case(name), eatspace)
+        return f'{camel_case(name)}Event *{eatspace}'
     else:
-        return '%s *%s' % (name, eatspace)
+        return f'{name} *{eatspace}'
 
 def is_c_ptr(name):
-    suffix = "*" + eatspace
+    suffix = f"*{eatspace}"
     return c_type(name).endswith(suffix)
 
 def genindent(count):
-    ret = ""
-    for i in range(count):
-        ret += " "
-    return ret
+    return "".join(" " for _ in range(count))
 
 indent_level = 0
 
@@ -549,7 +600,7 @@ def cgen(code, **kwds):
 
 def mcgen(code, **kwds):
     raw = cgen('\n'.join(code.split('\n')[1:-1]), **kwds)
-    return re.sub(re.escape(eatspace) + ' *', '', raw)
+    return re.sub(f'{re.escape(eatspace)} *', '', raw)
 
 def basename(filename):
     return filename.split("/")[-1]
@@ -558,7 +609,7 @@ def guardname(filename):
     guard = basename(filename).rsplit(".", 1)[0]
     for substr in [".", " ", "-"]:
         guard = guard.replace(substr, "_")
-    return guard.upper() + '_H'
+    return f'{guard.upper()}_H'
 
 def guardstart(name):
     return mcgen('''
@@ -590,16 +641,20 @@ def _generate_enum_string(value):
     for i in range(l):
         c = c_fun_str[i]
         # When c is upper and no "_" appears before, do more checks
-        if c.isupper() and (i > 0) and c_fun_str[i - 1] != "_":
-            # Case 1: next string is lower
-            # Case 2: previous string is digit
-            if (i < (l - 1) and c_fun_str[i + 1].islower()) or \
-            c_fun_str[i - 1].isdigit():
-                new_name += '_'
+        if (
+            c.isupper()
+            and (i > 0)
+            and c_fun_str[i - 1] != "_"
+            and (
+                (i < (l - 1) and c_fun_str[i + 1].islower())
+                or c_fun_str[i - 1].isdigit()
+            )
+        ):
+            new_name += '_'
         new_name += c
     return new_name.lstrip('_').upper()
 
 def generate_enum_full_value(enum_name, enum_value):
     abbrev_string = _generate_enum_string(enum_name)
     value_string = _generate_enum_string(enum_value)
-    return "%s_%s" % (abbrev_string, value_string)
+    return f"{abbrev_string}_{value_string}"

@@ -17,7 +17,7 @@ if __name__ == '__main__':
     directory = dirname(__file__)
     if directory == '':
         directory = '.'
-    modules = glob.glob(directory+"/*.py")
+    modules = glob.glob(f'{directory}/*.py')
     __all__ = [ basename(f)[:-3] for f in modules if isfile(f)]
     suite = unittest.TestSuite()
 

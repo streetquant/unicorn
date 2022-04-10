@@ -54,9 +54,9 @@ def debugMem():
 
 class EmuLoopReferenceTest(regress.RegressTest):
     def runTest(self):
-        for i in range(5):
-            emu_loop()
-        debugMem()
+            for _ in range(5):
+                    emu_loop()
+            debugMem()
 
 
 if __name__ == '__main__':

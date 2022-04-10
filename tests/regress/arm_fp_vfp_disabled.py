@@ -13,15 +13,7 @@ import regress
 class FpVfpDisabled(regress.RegressTest):
 
     def runTest(self):
-        # MRC p15, #0, r1, c1, c0, #2
-        # ORR r1, r1, #(0xf << 20)
-        # MCR p15, #0, r1, c1, c0, #2
-        # MOV r1, #0
-        # MCR p15, #0, r1, c7, c5, #4
-        # MOV r0,#0x40000000
-        # FMXR FPEXC, r0
-        code = '11EE501F'
-        code += '41F47001'
+        code = '11EE501F' + '41F47001'
         code += '01EE501F'
         code += '4FF00001'
         code += '07EE951F'
@@ -29,11 +21,11 @@ class FpVfpDisabled(regress.RegressTest):
         code += 'E8EE100A'
         # vpush {d8}
         code += '2ded028b'
-        
+
         address = 0x1000
         mem_size = 0x1000
         code_bytes = code.decode('hex')
-        
+
         uc = Uc(UC_ARCH_ARM, UC_MODE_THUMB)
         uc.mem_map(address, mem_size)
         uc.mem_write(address, code_bytes)

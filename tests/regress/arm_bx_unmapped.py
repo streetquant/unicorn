@@ -90,4 +90,4 @@ class BxTwiceTest(regress.RegressTest):
             print(">>> r2: 0x{:08x}".format(r2))
 
         except UcError as e:
-            self.fail("ERROR: %s" % e)
+            self.fail(f"ERROR: {e}")

@@ -12,7 +12,7 @@ import regress
 # Linux: No crashes observed.
 class ThreadCreateCrash(regress.RegressTest):
     def test(self):
-        for i in xrange(2048):
+        for _ in xrange(2048):
             Uc(UC_ARCH_X86, UC_MODE_64)
         self.assertTrue(True, "If not reached, then we have a crashing bug.")
 
