@@ -32,14 +32,13 @@ def test_arm():
     try:
         # Initialize emulator in ARM mode
         mu = Uc(UC_ARCH_ARM, UC_MODE_ARM)
-        
+
         mem_size = 2 * (1024 * 1024)
         mu.mem_map(ADDRESS, mem_size)
-        
+
         stack_address = ADDRESS + mem_size
         stack_size =  stack_address         # >>> here huge memory size
-        mu.mem_map(stack_address, stack_size)
-
+        mu.mem_map(stack_size, stack_size)
         # write machine code to be emulated to memory
         mu.mem_write(ADDRESS, ARM_CODE)
 
@@ -66,7 +65,7 @@ def test_arm():
         print(">>> R1 = 0x%x" %r1)
 
     except UcError as e:
-        print("ERROR: %s" % e)
+        print(f"ERROR: {e}")
 
 
 def test_thumb():
@@ -100,7 +99,7 @@ def test_thumb():
         print(">>> SP = 0x%x" %sp)
 
     except UcError as e:
-        print("ERROR: %s" % e)
+        print(f"ERROR: {e}")
 
 
 if __name__ == '__main__':

@@ -99,10 +99,10 @@ def hook_intr(uc, intno, user_data):
         except UcError as e:
             print(">>> 0x%x: interrupt 0x%x, SYS_WRITE. buffer = 0x%x, size = %u, content = <unknown>\n" \
                         %(eip, intno, ecx, edx))
-    elif eax == 11:    # sys_write
+    elif eax == 11:# sys_write
         ebx = uc.reg_read(UC_X86_REG_EBX)
         filename = read_string(uc, ebx)
-        print(">>> SYS_EXECV filename=%s" % filename)
+        print(f">>> SYS_EXECV filename={filename}")
     else:
         print(">>> 0x%x: interrupt 0x%x, EAX = 0x%x" %(eip, intno, eax))
 
@@ -117,10 +117,10 @@ def hook_syscall64(mu, user_data):
     rdi = mu.reg_read(UC_X86_REG_RDI)
 
     print(">>> got SYSCALL with RAX = %d" %(rax))
-    
-    if rax == 59:    #sys_execve
+
+    if rax == 59:#sys_execve
         filename = read_string(mu, rdi)
-        print(">>> SYS_EXECV filename=%s" % filename)
+        print(f">>> SYS_EXECV filename={filename}")
 
     else:
         rip = mu.reg_read(UC_X86_REG_RIP)
@@ -134,7 +134,7 @@ def test_i386(mode, code):
         print("Emulate x86_32 code")
     elif mode == UC_MODE_64:
         print("Emulate x86_64 code")
-    
+
     try:
         # Initialize emulator
         mu = Uc(UC_ARCH_X86, mode)
@@ -169,7 +169,7 @@ def test_i386(mode, code):
         print(">>> Emulation done")
 
     except UcError as e:
-        print("ERROR: %s" % e)
+        print(f"ERROR: {e}")
 
 if __name__ == '__main__':
     test_i386(UC_MODE_32, X86_CODE32_SELF)

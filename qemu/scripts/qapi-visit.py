@@ -46,19 +46,11 @@ static void visit_type_implicit_%(c_type)s(Visitor *m, %(c_type)s **obj, Error *
 def generate_visit_struct_fields(name, field_prefix, fn_prefix, members, base = None):
     substructs = []
     ret = ''
-    if not fn_prefix:
-        full_name = name
-    else:
-        full_name = "%s_%s" % (name, fn_prefix)
-
+    full_name = f"{name}_{fn_prefix}" if fn_prefix else name
     for argname, argentry, optional, structured in parse_args(members):
         if structured:
-            if not fn_prefix:
-                nested_fn_prefix = argname
-            else:
-                nested_fn_prefix = "%s_%s" % (fn_prefix, argname)
-
-            nested_field_prefix = "%s%s." % (field_prefix, argname)
+            nested_fn_prefix = f"{fn_prefix}_{argname}" if fn_prefix else argname
+            nested_field_prefix = f"{field_prefix}{argname}."
             ret += generate_visit_struct_fields(name, nested_field_prefix,
                                                 nested_fn_prefix, argentry)
             ret += mcgen('''
@@ -147,11 +139,7 @@ def generate_visit_struct_body(field_prefix, name, members):
 
 ''')
 
-    if not field_prefix:
-        full_name = name
-    else:
-        full_name = "%s_%s" % (field_prefix, name)
-
+    full_name = f"{field_prefix}_{name}" if field_prefix else name
     if len(field_prefix):
         ret += mcgen('''
     visit_start_struct(m, NULL, "", "%(name)s", 0, &err);
@@ -258,7 +246,7 @@ void visit_type_%(name)s(Visitor *m, %(name)s **obj, const char *name, Error **e
 
     # For anon union, always use the default enum type automatically generated
     # as "'%sKind' % (name)"
-    disc_type = '%sKind' % (name)
+    disc_type = f'{name}Kind'
 
     for key in members:
         assert (members[key] in builtin_types
@@ -304,16 +292,15 @@ def generate_visit_union(expr):
         assert not base
         return generate_visit_anon_union(name, members)
 
-    enum_define = discriminator_find_enum_define(expr)
-    if enum_define:
+    if enum_define := discriminator_find_enum_define(expr):
         # Use the enum type as discriminator
         ret = ""
         disc_type = enum_define['enum_name']
     else:
         # There will always be a discriminator in the C switch code, by default it
         # is an enum type generated silently as "'%sKind' % (name)"
-        ret = generate_visit_enum('%sKind' % name, members.keys())
-        disc_type = '%sKind' % (name)
+        ret = generate_visit_enum(f'{name}Kind', members.keys())
+        disc_type = f'{name}Kind'
 
     if base:
         base_fields = find_struct(base)['data']
@@ -349,10 +336,7 @@ void visit_type_%(name)s(Visitor *m, %(name)s **obj, const char *name, Error **e
 ''',
             name=name)
 
-    if not discriminator:
-        disc_key = "type"
-    else:
-        disc_key = discriminator
+    disc_key = discriminator or "type"
     ret += mcgen('''
         visit_type_%(disc_type)s(m, &(*obj)->kind, "%(disc_key)s", &err);
         if (err) {
@@ -367,10 +351,11 @@ void visit_type_%(name)s(Visitor *m, %(name)s **obj, const char *name, Error **e
                  disc_key = disc_key)
 
     for key in members:
-        if not discriminator:
-            fmt = 'visit_type_%(c_type)s(m, &(*obj)->%(c_name)s, "data", &err);'
-        else:
-            fmt = 'visit_type_implicit_%(c_type)s(m, &(*obj)->%(c_name)s, &err);'
+        fmt = (
+            'visit_type_implicit_%(c_type)s(m, &(*obj)->%(c_name)s, &err);'
+            if discriminator
+            else 'visit_type_%(c_type)s(m, &(*obj)->%(c_name)s, "data", &err);'
+        )
 
         enum_full_value = generate_enum_full_value(disc_type, key)
         ret += mcgen('''
@@ -440,7 +425,7 @@ try:
                                    ["source", "header", "builtins", "prefix=",
                                     "input-file=", "output-dir="])
 except getopt.GetoptError as err:
-    print(str(err))
+    print(err)
     sys.exit(1)
 
 input_file = ""
@@ -459,7 +444,7 @@ for o, a in opts:
     elif o in ("-i", "--input-file"):
         input_file = a
     elif o in ("-o", "--output-dir"):
-        output_dir = a + "/"
+        output_dir = f'{a}/'
     elif o in ("-c", "--source"):
         do_c = True
     elif o in ("-h", "--header"):
@@ -483,13 +468,12 @@ except os.error as e:
 def maybe_open(really, name, opt):
     if really:
         return open(name, opt)
-    else:
-        try:
-            import StringIO
-            return StringIO.StringIO()
-        except ImportError:
-            from io import StringIO
-            return StringIO()
+    try:
+        import StringIO
+        return StringIO.StringIO()
+    except ImportError:
+        from io import StringIO
+        return StringIO()
 
 fdef = maybe_open(do_c, c_file, 'w')
 fdecl = maybe_open(do_h, h_file, 'w')
@@ -573,8 +557,7 @@ for expr in exprs:
         enum_define = discriminator_find_enum_define(expr)
         ret = ""
         if not enum_define:
-            ret = generate_decl_enum('%sKind' % expr['union'],
-                                     expr['data'].keys())
+            ret = generate_decl_enum(f"{expr['union']}Kind", expr['data'].keys())
         ret += generate_declaration(expr['union'], expr['data'])
         fdecl.write(ret)
     elif 'enum' in expr:

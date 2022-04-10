@@ -145,7 +145,7 @@ def test_i386():
         print("")
 
     except UcError as e:
-        print("ERROR: %s" % e)
+        print(f"ERROR: {e}")
 
 
 def test_i386_map_ptr():
@@ -189,7 +189,7 @@ def test_i386_map_ptr():
         print("")
 
     except UcError as e:
-        print("ERROR: %s" % e)
+        print(f"ERROR: {e}")
 
 
 def test_i386_invalid_mem_read():
@@ -218,7 +218,7 @@ def test_i386_invalid_mem_read():
             # emulate machine code in infinite time
             mu.emu_start(ADDRESS, ADDRESS + len(X86_CODE32_MEM_READ))
         except UcError as e:
-            print("Failed on uc_emu_start() with error returned 6: %s" % e)
+            print(f"Failed on uc_emu_start() with error returned 6: {e}")
 
         # now print out some registers
         print(">>> Emulation done. Below is the CPU context")
@@ -229,7 +229,7 @@ def test_i386_invalid_mem_read():
         print(">>> EDX = 0x%x" %r_edx)
 
     except UcError as e:
-        print("ERROR: %s" % e)
+        print(f"ERROR: {e}")
 
 def test_i386_jump():
     print("Emulate i386 code with jump")
@@ -253,12 +253,12 @@ def test_i386_jump():
             # emulate machine code in infinite time
             mu.emu_start(ADDRESS, ADDRESS + len(X86_CODE32_JUMP))
         except UcError as e:
-            print("ERROR: %s" % e)
+            print(f"ERROR: {e}")
 
         print(">>> Emulation done. Below is the CPU context")
 
     except UcError as e:
-        print("ERROR: %s" % e)
+        print(f"ERROR: {e}")
 
 
 def test_i386_invalid_mem_write():
@@ -290,7 +290,7 @@ def test_i386_invalid_mem_write():
             # emulate machine code in infinite time
             mu.emu_start(ADDRESS, ADDRESS + len(X86_CODE32_MEM_WRITE))
         except UcError as e:
-            print("ERROR: %s" % e)
+            print(f"ERROR: {e}")
 
         # now print out some registers
         print(">>> Emulation done. Below is the CPU context")
@@ -319,7 +319,7 @@ def test_i386_invalid_mem_write():
             print(">>> Failed to read 4 bytes from [0xffffffaa]")
 
     except UcError as e:
-        print("ERROR: %s" % e)
+        print(f"ERROR: {e}")
 
 def test_i386_jump_invalid():
     print("Emulate i386 code that jumps to invalid memory")
@@ -346,7 +346,7 @@ def test_i386_jump_invalid():
         try:
             mu.emu_start(ADDRESS, ADDRESS + len(X86_CODE32_JMP_INVALID))
         except UcError as e:
-            print("Failed on uc_emu_start() with error returned 8: %s" %e)
+            print(f"Failed on uc_emu_start() with error returned 8: {e}")
 
         print(">>> Emulation done. Below is the CPU context")
 
@@ -356,7 +356,7 @@ def test_i386_jump_invalid():
         print(">>> EDX = 0x%x" %r_edx)
 
     except UcError as e:
-        print("ERROR %s" % e)
+        print(f"ERROR {e}")
 
 def test_i386_loop():
     print("Emulate i386 code that loop forever")
@@ -384,7 +384,7 @@ def test_i386_loop():
         print(">>> EDX = 0x%x" %r_edx)
 
     except UcError as e:
-        print("ERROR: %s" % e)
+        print(f"ERROR: {e}")
 
 
 # Test X86 32 bit with IN/OUT instruction
@@ -425,7 +425,7 @@ def test_i386_inout():
         print(">>> EAX = 0x%x" %r_eax)
         print(">>> ECX = 0x%x" %r_ecx)
     except UcError as e:
-        print("ERROR: %s" % e)
+        print(f"ERROR: {e}")
 
 
 def test_i386_context_save():
@@ -469,7 +469,7 @@ def test_i386_context_save():
         print(">>> EAX = 0x%x" %(mu.reg_read(UC_X86_REG_EAX)))
 
     except UcError as e:
-        print("ERROR: %s" % e)
+        print(f"ERROR: {e}")
 
 def test_x86_64():
     print("Emulate x86_64 code")
@@ -518,7 +518,7 @@ def test_x86_64():
             # emulate machine code in infinite time
             mu.emu_start(ADDRESS, ADDRESS + len(X86_CODE64))
         except UcError as e:
-            print("ERROR: %s" % e)
+            print(f"ERROR: {e}")
 
         # now print out some registers
         print(">>> Emulation done. Below is the CPU context")
@@ -555,7 +555,7 @@ def test_x86_64():
 
 
     except UcError as e:
-        print("ERROR: %s" % e)
+        print(f"ERROR: {e}")
 
 
 def test_x86_64_syscall():
@@ -626,7 +626,7 @@ def test_x86_16():
         print(">>> Read 1 bytes from [0x%x] = 0x%x" %(11, tmp[0]))
 
     except UcError as e:
-        print("ERROR: %s" % e)
+        print(f"ERROR: {e}")
 
 
 if __name__ == '__main__':

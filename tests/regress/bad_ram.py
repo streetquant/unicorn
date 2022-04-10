@@ -23,7 +23,7 @@ class Hang(regress.RegressTest):
         try:
             self.assertEqual(mu.emu_start(CODE_ADDR, CODE_ADDR + PAGE_SIZE, 0), UC_ERR_FETCH_INVALID)
         except UcError as e:
-            print("ERROR: %s" % e)
+            print(f"ERROR: {e}")
 
 
 if __name__ == '__main__':

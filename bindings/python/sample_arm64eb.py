@@ -62,7 +62,7 @@ def test_arm64():
         print(">>> X15 = 0x%x" %x15)
 
     except UcError as e:
-        print("ERROR: %s" % e)
+        print(f"ERROR: {e}")
 
 
 if __name__ == '__main__':

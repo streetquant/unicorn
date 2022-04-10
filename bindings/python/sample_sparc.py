@@ -57,7 +57,7 @@ def test_sparc():
         print(">>> G3 = 0x%x" %g3)
 
     except UcError as e:
-        print("ERROR: %s" % e)
+        print(f"ERROR: {e}")
 
 
 if __name__ == '__main__':

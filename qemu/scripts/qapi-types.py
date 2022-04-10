@@ -100,7 +100,7 @@ struct %(name)s
     ret += generate_struct_fields(members)
 
     if len(fieldname):
-        fieldname = " " + fieldname
+        fieldname = f" {fieldname}"
     ret += mcgen('''
 }%(field)s;
 ''',
@@ -142,16 +142,13 @@ typedef enum %(name)s
     # append automatically generated _MAX value
     enum_values = values + [ 'MAX' ]
 
-    i = 0
-    for value in enum_values:
+    for i, value in enumerate(enum_values):
         enum_full_value = generate_enum_full_value(name, value)
         enum_decl += mcgen('''
     %(enum_full_value)s = %(i)d,
 ''',
                      enum_full_value = enum_full_value,
                      i=i)
-        i += 1
-
     enum_decl += mcgen('''
 } %(name)s;
 ''',
@@ -203,8 +200,7 @@ def generate_union(expr):
     base = expr.get('base')
     discriminator = expr.get('discriminator')
 
-    enum_define = discriminator_find_enum_define(expr)
-    if enum_define:
+    if enum_define := discriminator_find_enum_define(expr):
         discriminator_type_name = enum_define['enum_name']
     else:
         discriminator_type_name = '%sKind' % (name)
@@ -252,14 +248,17 @@ extern const int %(name)s_qtypes[];
     return ret
 
 def generate_type_cleanup_decl(name):
-    ret = mcgen('''
+    return mcgen(
+        '''
 void qapi_free_%(type)s(%(c_type)s obj);
 ''',
-                c_type=c_type(name),type=name)
-    return ret
+        c_type=c_type(name),
+        type=name,
+    )
 
 def generate_type_cleanup(name):
-    ret = mcgen('''
+    return mcgen(
+        '''
 
 void qapi_free_%(type)s(%(c_type)s obj)
 {
@@ -276,8 +275,9 @@ void qapi_free_%(type)s(%(c_type)s obj)
     qapi_dealloc_visitor_cleanup(md);
 }
 ''',
-                c_type=c_type(name),type=name)
-    return ret
+        c_type=c_type(name),
+        type=name,
+    )
 
 
 try:
@@ -285,7 +285,7 @@ try:
                                    ["source", "header", "builtins",
                                     "prefix=", "input-file=", "output-dir="])
 except getopt.GetoptError as err:
-    print(str(err))
+    print(err)
     sys.exit(1)
 
 output_dir = ""
@@ -304,7 +304,7 @@ for o, a in opts:
     elif o in ("-i", "--input-file"):
         input_file = a
     elif o in ("-o", "--output-dir"):
-        output_dir = a + "/"
+        output_dir = f'{a}/'
     elif o in ("-c", "--source"):
         do_c = True
     elif o in ("-h", "--header"):
@@ -328,13 +328,12 @@ except os.error as e:
 def maybe_open(really, name, opt):
     if really:
         return open(name, opt)
-    else:
-        try:
-            import StringIO
-            return StringIO.StringIO()
-        except ImportError:
-            from io import StringIO
-            return StringIO()
+    try:
+        import StringIO
+        return StringIO.StringIO()
+    except ImportError:
+        from io import StringIO
+        return StringIO()
 
 fdef = maybe_open(do_c, c_file, 'w')
 fdecl = maybe_open(do_h, h_file, 'w')
@@ -407,9 +406,8 @@ for expr in exprs:
         ret += generate_fwd_struct(expr['union'], expr['data']) + "\n"
         enum_define = discriminator_find_enum_define(expr)
         if not enum_define:
-            ret += generate_enum('%sKind' % expr['union'], expr['data'].keys())
-            fdef.write(generate_enum_lookup('%sKind' % expr['union'],
-                                            expr['data'].keys()))
+            ret += generate_enum(f"{expr['union']}Kind", expr['data'].keys())
+            fdef.write(generate_enum_lookup(f"{expr['union']}Kind", expr['data'].keys()))
         if expr.get('discriminator') == {}:
             fdef.write(generate_anon_union_qtypes(expr))
     else:
@@ -420,7 +418,7 @@ for expr in exprs:
 # for built-in types in our header files and simply guard them
 fdecl.write(guardstart("QAPI_TYPES_BUILTIN_CLEANUP_DECL"))
 for typename in builtin_types:
-    fdecl.write(generate_type_cleanup_decl(typename + "List"))
+    fdecl.write(generate_type_cleanup_decl(f'{typename}List'))
 fdecl.write(guardend("QAPI_TYPES_BUILTIN_CLEANUP_DECL"))
 
 # ...this doesn't work for cases where we link in multiple objects that
@@ -429,7 +427,7 @@ fdecl.write(guardend("QAPI_TYPES_BUILTIN_CLEANUP_DECL"))
 if do_builtins:
     fdef.write(guardstart("QAPI_TYPES_BUILTIN_CLEANUP_DEF"))
     for typename in builtin_types:
-        fdef.write(generate_type_cleanup(typename + "List"))
+        fdef.write(generate_type_cleanup(f'{typename}List'))
     fdef.write(guardend("QAPI_TYPES_BUILTIN_CLEANUP_DEF"))
 
 for expr in exprs:

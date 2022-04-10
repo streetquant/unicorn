@@ -115,90 +115,86 @@ def gen(lang):
     templ = template[lang]
     for target in include:
         prefix = templ[target]
-        outfile = open(templ['out_file'] %(prefix), 'wb')   # open as binary prevents windows newlines
-        outfile.write((templ['header'] % (prefix)).encode("utf-8"))
-        if target == 'unicorn.h':
-            prefix = ''
-        with open(os.path.join(INCL_DIR, target)) as f:
-            lines = f.readlines()
+        with open(templ['out_file'] %(prefix), 'wb') as outfile:
+            outfile.write((templ['header'] % (prefix)).encode("utf-8"))
+            if target == 'unicorn.h':
+                prefix = ''
+            with open(os.path.join(INCL_DIR, target)) as f:
+                lines = f.readlines()
 
-        previous = {}
-        count = 0
-        for line in lines:
-            line = line.strip()
+            previous = {}
+            count = 0
+            for line in lines:
+                line = line.strip()
 
-            if line.startswith(MARKUP):  # markup for comments
-                outfile.write(("\n%s%s%s\n" %(templ['comment_open'], \
-                            line.replace(MARKUP, ''), templ['comment_close'])).encode("utf-8"))
-                continue
+                if line.startswith(MARKUP):  # markup for comments
+                    outfile.write(("\n%s%s%s\n" %(templ['comment_open'], \
+                                line.replace(MARKUP, ''), templ['comment_close'])).encode("utf-8"))
+                    continue
 
-            if line == '' or line.startswith('//'):
-                continue
+                if line == '' or line.startswith('//'):
+                    continue
 
-            tmp = line.strip().split(',')
-            for t in tmp:
-                t = t.strip()
-                if not t or t.startswith('//'): continue
-                f = re.split('\s+', t)
+                tmp = line.strip().split(',')
+                for t in tmp:
+                    t = t.strip()
+                    if not t or t.startswith('//'): continue
+                    f = re.split('\s+', t)
 
-                # parse #define UC_TARGET (num)
-                define = False
-                if f[0] == '#define' and len(f) >= 3:
-                    define = True
-                    f.pop(0)
-                    f.insert(1, '=')
+                    # parse #define UC_TARGET (num)
+                    define = False
+                    if f[0] == '#define' and len(f) >= 3:
+                        define = True
+                        f.pop(0)
+                        f.insert(1, '=')
 
-                if f[0].startswith("UC_" + prefix.upper()):
-                    if len(f) > 1 and f[1] not in ('//', '='):
-                        print("WARNING: Unable to convert %s" % f)
-                        print("  Line =", line)
-                        continue
-                    elif len(f) > 1 and f[1] == '=':
-                        rhs = ''.join(f[2:])
-                    else:
-                        rhs = str(count)
+                    if f[0].startswith(f"UC_{prefix.upper()}"):
+                        if len(f) > 1 and f[1] not in ('//', '='):
+                            print(f"WARNING: Unable to convert {f}")
+                            print("  Line =", line)
+                            continue
+                        elif len(f) > 1 and f[1] == '=':
+                            rhs = ''.join(f[2:])
+                        else:
+                            rhs = str(count)
 
-                    lhs = f[0].strip()
-                    # evaluate bitshifts in constants e.g. "UC_X86 = 1 << 1"
-                    match = re.match(r'(?P<rhs>\s*\d+\s*<<\s*\d+\s*)', rhs)
-                    if match:
-                        rhs = str(eval(match.group(1)))
-                    else:
-                        # evaluate references to other constants e.g. "UC_ARM_REG_X = UC_ARM_REG_SP"
-                        match = re.match(r'^([^\d]\w+)$', rhs)
-                        if match:
-                            rhs = previous[match.group(1)]
+                        lhs = f[0].strip()
+                        if match := re.match(
+                            r'(?P<rhs>\s*\d+\s*<<\s*\d+\s*)', rhs
+                        ):
+                            rhs = str(eval(match[1]))
+                        elif match := re.match(r'^([^\d]\w+)$', rhs):
+                            rhs = previous[match[1]]
 
-                    if not rhs.isdigit():
-                        for k, v in previous.items():
-                            rhs = re.sub(r'\b%s\b' % k, v, rhs)
-                        rhs = str(eval(rhs))
+                        if not rhs.isdigit():
+                            for k, v in previous.items():
+                                rhs = re.sub(r'\b%s\b' % k, v, rhs)
+                            rhs = str(eval(rhs))
 
-                    lhs_strip = re.sub(r'^UC_', '', lhs)
-                    count = int(rhs) + 1
-                    if (count == 1):
-                        outfile.write(("\n").encode("utf-8"))
+                        lhs_strip = re.sub(r'^UC_', '', lhs)
+                        count = int(rhs) + 1
+                        if (count == 1):
+                            outfile.write(("\n").encode("utf-8"))
 
-                    outfile.write((templ['line_format'] % (lhs_strip, rhs)).encode("utf-8"))
-                    previous[lhs] = str(rhs)
+                        outfile.write((templ['line_format'] % (lhs_strip, rhs)).encode("utf-8"))
+                        previous[lhs] = str(rhs)
 
-        outfile.write((templ['footer']).encode("utf-8"))
-        outfile.close()
+            outfile.write((templ['footer']).encode("utf-8"))
 
 def main():
     lang = sys.argv[1]
     if lang == "all":
         for lang in template.keys():
-            print("Generating constants for {}".format(lang))
+            print(f"Generating constants for {lang}")
             gen(lang)
-    else:
-        if not lang in template:
-            raise RuntimeError("Unsupported binding %s" % lang)
+    elif lang in template:
         gen(lang)
+    else:
+        raise RuntimeError(f"Unsupported binding {lang}")
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("Usage:", sys.argv[0], " <python>")
-        print("Supported: {}".format(["all"] + [x for x in template.keys()]))
+        print(f'Supported: {["all"] + list(template.keys())}')
         sys.exit(1)
     main()

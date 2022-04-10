@@ -57,9 +57,7 @@ class Init(regress.RegressTest):
         global mu
         ips = list(xrange(0x1000000, 0x1001000, 0x1))
         sps = list(xrange(0x8000000, 0x8001000, 0x1))
-        j = 0
-        for i in ips:
-            j += 1
+        for j, i in enumerate(ips, start=1):
             index = ips.index(i)
             self.init_unicorn(i, sps[index], j)
             mu.emu_start(0x1000000, 0x1000000 + 0x1)

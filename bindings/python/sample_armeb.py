@@ -41,7 +41,7 @@ def test_arm():
         mu.reg_write(UC_ARM_REG_R2, 0x6789)
         mu.reg_write(UC_ARM_REG_R3, 0x3333)
         mu.reg_write(UC_ARM_REG_APSR, 0xFFFFFFFF) #All application flags turned on
-   
+
         # tracing all basic blocks with customized callback
         mu.hook_add(UC_HOOK_BLOCK, hook_block)
 
@@ -60,7 +60,7 @@ def test_arm():
         print(">>> R1 = 0x%x" %r1)
 
     except UcError as e:
-        print("ERROR: %s" % e)
+        print(f"ERROR: {e}")
 
 
 def test_thumb():
@@ -95,7 +95,7 @@ def test_thumb():
         print(">>> SP = 0x%x" %sp)
 
     except UcError as e:
-        print("ERROR: %s" % e)
+        print(f"ERROR: {e}")
 
 
 if __name__ == '__main__':
